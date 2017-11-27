@@ -20,6 +20,8 @@ def main():
                         dest='profile', default='default')
     parser.add_argument('--bucket-name', action='store',
                         dest='bucket_name', required=True)
+    parser.add_argument('--detailed-output', action='store_true',
+                        dest='detailed_output', default=False)
     args = parser.parse_args()
 
     # set boto session parameters
@@ -33,7 +35,25 @@ def main():
         sys.exit(1)
 
     bucket_objects = get_bucket_objects(s3resource, args.bucket_name)
-    copy_object_with_encryption(s3client, args.bucket_name, bucket_objects)
+    print("Working over {} objects".format(len(bucket_objects)))
+
+    summary = copy_object_with_encryption(
+        s3client, args.bucket_name, bucket_objects
+    )
+
+    print("===================================================================")
+    print("============================= SUMMARY =============================")
+    print("Already Encrypted:    {}".format(len(summary['already_encrypted'])))
+    print("Copied and Encrypted: {}".format(
+        len(summary['copied_and_encrypted'])))
+    print("===================================================================")
+    if args.detailed_output:
+        print("==================== OBJECTS ALREADY ENCRYPTED ====================")
+        for oae in summary['already_encrypted']:
+            print("Name: %25s\tEncryption: %10s" % (oae['key'], oae['sse']))
+        print("====================== COPIED AND ENCRYPTED =======================")
+        for cae in summary['copied_and_encrypted']:
+            print("Name: %25s\tEncryption: %10s" % (cae['key'], cae['sse']))
 
 
 def list_buckets(s3client):
@@ -60,6 +80,9 @@ def get_bucket_objects(s3client, bucket_name):
 
 def copy_object_with_encryption(s3client, bucket, objects):
     """Copies list of objects in place with encryption"""
+    already_encrypted = []
+    copied_and_encrypted = []
+
     for obj in objects:
         if obj.server_side_encryption is None:
             copy_source = {
@@ -74,14 +97,20 @@ def copy_object_with_encryption(s3client, bucket, objects):
                 ServerSideEncryption='aws:kms'
             )
 
-            print("Object Name:       {}".format(obj.key))
-            print("Object Encryption: {}".format(resp['ServerSideEncryption']))
+            copied_and_encrypted.append({
+                "key": obj.key,
+                "sse": resp['ServerSideEncryption']
+            })
         else:
-            print("Object {} already encrypted".format(obj.key))
+            already_encrypted.append({
+                "key": obj.key,
+                "sse": obj.server_side_encryption
+            })
 
-        print("--------------------")
-
-    return True
+    return {
+        "already_encrypted": already_encrypted,
+        "copied_and_encrypted": copied_and_encrypted
+    }
 
 
 if __name__ == "__main__":

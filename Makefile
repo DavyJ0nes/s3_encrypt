@@ -24,7 +24,7 @@ build:
 
 run:
 	$(call blue, "# Running Python App...")
-	docker run --rm --name ${image_name} -v "${awscli_dir}":/root/.aws/ -v "$(CURDIR)":/src/app/ -w /src/app ${user_name}/${image_name} python ${app_name}.py --profile ${script_profile} --bucket-name ${script_bucket}
+	docker run --rm --name ${image_name} -v "${awscli_dir}":/root/.aws/ -v "$(CURDIR)":/src/app/ -w /src/app ${user_name}/${image_name} python ${app_name}.py --profile ${script_profile} --bucket-name ${script_bucket} --detailed-output
 
 test:
 	$(call blue, "# Testing Python App...")
