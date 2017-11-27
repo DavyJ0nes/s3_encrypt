@@ -2,14 +2,14 @@ all: run_docker
 
 #### VARIABLES ####
 image_name ?= s3_encrypt
-user_name ?= davyj0nes
+user_name ?= $(shell whoami | tr '[A-Z]' '[a-z]')
 app_name ?= s3_encrypt
 
 script_profile ?= default
 script_bucket ?= bucket_name
 
 py_version ?= 3.6.2
-app_version ?= 0.0.1
+app_version ?= 0.0.2
 
 awscli_dir ?= $(HOME)/.aws/
 git_hash = $(shell git rev-parse HEAD | cut -c 1-6)
