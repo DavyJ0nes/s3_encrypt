@@ -4,8 +4,14 @@ all: run_docker
 image_name ?= s3_encrypt
 user_name ?= davyj0nes
 app_name ?= s3_encrypt
+
+script_profile ?= default
+script_bucket ?= bucket_name
+
 py_version ?= 3.6.2
 app_version ?= 0.0.1
+
+awscli_dir ?= $(HOME)/.aws/
 git_hash = $(shell git rev-parse HEAD | cut -c 1-6)
 build_date = $(shell date -u '+%Y-%m-%d_%I:%M:%S%p')
 
@@ -18,11 +24,11 @@ build:
 
 run:
 	$(call blue, "# Running Python App...")
-	docker run --rm --name ${image_name} -v "$(CURDIR)":/src/app/ -w /src/app ${user_name}/${image_name} python ${app_name}.py
+	docker run --rm --name ${image_name} -v "${awscli_dir}":/root/.aws/ -v "$(CURDIR)":/src/app/ -w /src/app ${user_name}/${image_name} python ${app_name}.py --profile ${script_profile} --bucket-name ${script_bucket}
 
 test:
 	$(call blue, "# Testing Python App...")
-	docker run --rm --name ${image_name}_test python:${py_version}-alpine3.6
+	docker run --rm --name ${image_name} -v "$(CURDIR)":/src/app/ -w /src/app ${user_name}/${image_name} python ${app_name}_test.py
 
 #### FUNCTIONS ####
 define blue
